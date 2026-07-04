@@ -2,24 +2,24 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
-import { 
-  TrendingUp, 
-  Users, 
-  Wallet, 
-  ArrowUpRight, 
+import {
+  TrendingUp,
+  Users,
+  Wallet,
+  ArrowUpRight,
   ArrowDownRight,
   RefreshCw,
   FileText,
   AlertTriangle,
   FolderOpen
 } from 'lucide-react';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -92,50 +92,53 @@ export default function DashboardPage() {
       <div className="flex h-[80vh] items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
-          <p className="text-sm text-slate-400">Carregando métricas...</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Carregando métricas...</p>
         </div>
       </div>
     );
   }
 
-  // Color mappings for Pie/Donut Chart
   const COLORS = ['#818CF8', '#34D399', '#FBBF24', '#F87171', '#22D3EE', '#A78BFA'];
+
+  const chartTooltipStyle = {
+    backgroundColor: 'var(--card-bg)',
+    borderColor: 'var(--card-border)',
+    borderRadius: 12,
+    color: 'var(--foreground)',
+  };
 
   return (
     <div className="space-y-6">
-      {/* Upper header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Dashboard Geral</h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-800 dark:text-white">Dashboard Geral</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Resumo financeiro, operacional e de vendas da empresa.
           </p>
         </div>
-        <button 
+        <button
           onClick={loadData}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-800 bg-slate-900/40 text-slate-300 text-xs hover:bg-slate-800 transition-colors duration-150 cursor-pointer"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40 text-slate-600 dark:text-slate-300 text-xs hover:bg-white/60 dark:hover:bg-slate-800 transition-colors duration-150 cursor-pointer"
         >
           <RefreshCw size={14} />
           <span>Atualizar</span>
         </button>
       </div>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Vendas */}
         <div className="glass-panel p-5 rounded-2xl">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Vendas do Mês</span>
-            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Vendas do Mês</span>
+            <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
               <TrendingUp size={20} />
             </div>
           </div>
           <div className="mt-4">
-            <h3 className="text-2xl font-bold text-white font-mono">{formatCurrency(kpis?.vendas_mes || 0)}</h3>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-white font-mono">{formatCurrency(kpis?.vendas_mes || 0)}</h3>
             <div className="flex items-center gap-1.5 mt-2">
               {kpis && kpis.crescimento_vendas >= 0 ? (
                 <>
-                  <span className="flex items-center text-xs font-semibold text-emerald-400">
+                  <span className="flex items-center text-xs font-semibold text-emerald-500 dark:text-emerald-400">
                     <ArrowUpRight size={14} className="mr-0.5" />
                     +{kpis.crescimento_vendas}%
                   </span>
@@ -143,7 +146,7 @@ export default function DashboardPage() {
                 </>
               ) : (
                 <>
-                  <span className="flex items-center text-xs font-semibold text-rose-400">
+                  <span className="flex items-center text-xs font-semibold text-rose-500 dark:text-rose-400">
                     <ArrowDownRight size={14} className="mr-0.5" />
                     {kpis?.crescimento_vendas}%
                   </span>
@@ -154,82 +157,76 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Card 2: Clientes */}
         <div className="glass-panel p-5 rounded-2xl">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Clientes</span>
-            <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Clientes</span>
+            <div className="p-2 rounded-xl bg-cyan-50 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
               <Users size={20} />
             </div>
           </div>
           <div className="mt-4">
-            <h3 className="text-2xl font-bold text-white font-mono">{kpis?.total_clientes || 0}</h3>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-white font-mono">{kpis?.total_clientes || 0}</h3>
             <p className="text-[10px] text-slate-400 mt-2">Clientes ativos cadastrados no CRM</p>
           </div>
         </div>
 
-        {/* Card 3: Contas Vencidas */}
         <div className="glass-panel p-5 rounded-2xl">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Inadimplência (Vencido)</span>
-            <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Inadimplência (Vencido)</span>
+            <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400">
               <Wallet size={20} />
             </div>
           </div>
           <div className="mt-4">
-            <h3 className="text-2xl font-bold text-white font-mono">{formatCurrency(kpis?.a_receber_vencido || 0)}</h3>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-white font-mono">{formatCurrency(kpis?.a_receber_vencido || 0)}</h3>
             <div className="flex items-center gap-1.5 mt-2">
               <span className="text-[10px] text-slate-400">Pagar pendente vencido: </span>
-              <span className="text-[10px] text-rose-400 font-semibold">{formatCurrency(kpis?.a_pagar_vencido || 0)}</span>
+              <span className="text-[10px] text-rose-500 dark:text-rose-400 font-semibold">{formatCurrency(kpis?.a_pagar_vencido || 0)}</span>
             </div>
           </div>
         </div>
 
-        {/* Card 4: Alertas de Estoque */}
         <div className="glass-panel p-5 rounded-2xl">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Estoque Crítico</span>
-            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Estoque Crítico</span>
+            <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
               <AlertTriangle size={20} />
             </div>
           </div>
           <div className="mt-4">
-            <h3 className="text-2xl font-bold text-white font-mono">{kpis?.produtos_criticos || 0}</h3>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-white font-mono">{kpis?.produtos_criticos || 0}</h3>
             <p className="text-[10px] text-slate-400 mt-2">Itens abaixo do estoque mínimo definido</p>
           </div>
         </div>
       </div>
 
-      {/* Operação secundária / outros indicadores rápidos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="glass-panel px-4 py-3 rounded-xl flex items-center gap-3">
-          <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400"><FileText size={16} /></div>
+          <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"><FileText size={16} /></div>
           <div className="text-xs">
-            <p className="text-slate-400 font-medium">Pedidos Pendentes</p>
-            <p className="text-white font-bold text-sm">{kpis?.pedidos_pendentes || 0}</p>
+            <p className="text-slate-500 dark:text-slate-400 font-medium">Pedidos Pendentes</p>
+            <p className="text-slate-800 dark:text-white font-bold text-sm">{kpis?.pedidos_pendentes || 0}</p>
           </div>
         </div>
         <div className="glass-panel px-4 py-3 rounded-xl flex items-center gap-3">
-          <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400"><FolderOpen size={16} /></div>
+          <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"><FolderOpen size={16} /></div>
           <div className="text-xs">
-            <p className="text-slate-400 font-medium">Projetos Ativos</p>
-            <p className="text-white font-bold text-sm">{kpis?.projetos_ativos || 0}</p>
+            <p className="text-slate-500 dark:text-slate-400 font-medium">Projetos Ativos</p>
+            <p className="text-slate-800 dark:text-white font-bold text-sm">{kpis?.projetos_ativos || 0}</p>
           </div>
         </div>
         <div className="glass-panel px-4 py-3 rounded-xl flex items-center gap-3">
-          <div className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400"><Users size={16} /></div>
+          <div className="p-1.5 rounded-lg bg-cyan-50 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"><Users size={16} /></div>
           <div className="text-xs">
-            <p className="text-slate-400 font-medium">Colaboradores ativos</p>
-            <p className="text-white font-bold text-sm">{kpis?.total_funcionarios || 0}</p>
+            <p className="text-slate-500 dark:text-slate-400 font-medium">Colaboradores ativos</p>
+            <p className="text-slate-800 dark:text-white font-bold text-sm">{kpis?.total_funcionarios || 0}</p>
           </div>
         </div>
       </div>
 
-      {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Fluxo de Caixa (Area Chart) */}
         <div className="glass-panel p-5 rounded-2xl lg:col-span-2">
-          <h4 className="text-sm font-semibold text-white tracking-wide mb-4">Fluxo de Caixa (Últimos 6 meses)</h4>
+          <h4 className="text-sm font-semibold text-slate-800 dark:text-white tracking-wide mb-4">Fluxo de Caixa (Últimos 6 meses)</h4>
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={fluxo}>
@@ -243,13 +240,10 @@ export default function DashboardPage() {
                     <stop offset="95%" stopColor="#f87171" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="mes" stroke="#64748B" style={{ fontSize: 10 }} />
-                <YAxis stroke="#64748B" style={{ fontSize: 10 }} tickFormatter={(v) => `R$${v}`} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#0B0F19', borderColor: 'rgba(255,255,255,0.1)', borderRadius: 12 }} 
-                  labelStyle={{ color: '#94A3B8', fontWeight: 'bold' }}
-                />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
+                <XAxis dataKey="mes" stroke="#94A3B8" style={{ fontSize: 10 }} />
+                <YAxis stroke="#94A3B8" style={{ fontSize: 10 }} tickFormatter={(v) => `R$${v}`} />
+                <Tooltip contentStyle={chartTooltipStyle} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Area type="monotone" dataKey="receitas" name="Receitas" stroke="#818cf8" strokeWidth={2} fillOpacity={1} fill="url(#colorReceitas)" />
                 <Area type="monotone" dataKey="despesas" name="Despesas" stroke="#f87171" strokeWidth={2} fillOpacity={1} fill="url(#colorDespesas)" />
@@ -258,12 +252,11 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Right: Vendas por Status (Donut Chart) */}
         <div className="glass-panel p-5 rounded-2xl">
-          <h4 className="text-sm font-semibold text-white tracking-wide mb-4">Pedidos por Status</h4>
+          <h4 className="text-sm font-semibold text-slate-800 dark:text-white tracking-wide mb-4">Pedidos por Status</h4>
           <div className="h-60 w-full flex items-center justify-center">
             {statusVendas.length === 0 ? (
-              <p className="text-xs text-slate-500">Nenhum pedido de venda registrado.</p>
+              <p className="text-xs text-slate-400">Nenhum pedido de venda registrado.</p>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -281,19 +274,16 @@ export default function DashboardPage() {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#0B0F19', borderColor: 'rgba(255,255,255,0.1)', borderRadius: 12 }}
-                  />
+                  <Tooltip contentStyle={chartTooltipStyle} />
                 </PieChart>
               </ResponsiveContainer>
             )}
           </div>
-          {/* Status custom Legend list */}
           <div className="grid grid-cols-2 gap-2 mt-2">
             {statusVendas.map((item, idx) => (
               <div key={idx} className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                <span className="text-[10px] text-slate-400 capitalize truncate" title={item.status}>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 capitalize truncate" title={item.status}>
                   {item.status} ({item.quantidade})
                 </span>
               </div>

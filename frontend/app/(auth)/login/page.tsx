@@ -13,7 +13,6 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // If already logged in, redirect
     if (localStorage.getItem('access_token')) {
       router.push('/dashboard');
     }
@@ -26,12 +25,9 @@ export default function LoginPage() {
 
     try {
       const data: any = await api.post('/auth/login', { email, password });
-      
-      // Save credentials in storage
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('refresh_token', data.refresh_token);
       localStorage.setItem('user', JSON.stringify(data.user));
-
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'E-mail ou senha incorretos.');
@@ -41,36 +37,34 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#070A13] relative overflow-hidden px-4">
-      {/* Decorative Blur Background Blobs */}
+    <div className="min-h-screen flex items-center justify-center bg-[#F0F2F5] dark:bg-[#070A13] relative overflow-hidden px-4">
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-[120px] animate-pulse-slow pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-[120px] animate-pulse-slow pointer-events-none" />
 
-      {/* Login Box */}
-      <div className="w-full max-w-md glass-panel bg-[#0B0F19]/65 p-8 rounded-3xl relative z-10 border border-white/[0.06] shadow-2xl">
+      <div className="w-full max-w-md glass-panel bg-white/80 dark:bg-[#0B0F19]/65 p-8 rounded-3xl relative z-10 border border-slate-200 dark:border-white/[0.06] shadow-2xl">
         <div className="flex flex-col items-center mb-8">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center mb-4 shadow-lg shadow-indigo-500/25">
             <ShieldCheck className="w-6 h-6 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Acesse o Sistema</h2>
-          <p className="text-xs text-slate-400 mt-1.5 text-center">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Acesse o Sistema</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 text-center">
             Bem-vindo ao ERP Moderno. Entre com suas credenciais.
           </p>
         </div>
 
         {error && (
-          <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium text-center">
+          <div className="mb-5 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium text-center">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 pl-1">
+            <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 pl-1">
               E-mail corporativo
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-3 text-slate-500" size={16} />
+              <Mail className="absolute left-3 top-3 text-slate-400 dark:text-slate-500" size={16} />
               <input
                 type="email"
                 required
@@ -83,11 +77,11 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 pl-1">
+            <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 pl-1">
               Senha de acesso
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 text-slate-500" size={16} />
+              <Lock className="absolute left-3 top-3 text-slate-400 dark:text-slate-500" size={16} />
               <input
                 type="password"
                 required
@@ -115,14 +109,13 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Demo Credentials Suggestion */}
-        <div className="mt-8 pt-6 border-t border-slate-800/60 text-center">
-          <p className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase mb-2">Acesso Demo</p>
-          <p className="text-xs text-slate-400">
-            Email: <code className="text-indigo-400 font-semibold">admin@erp.com</code>
+        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800/60 text-center">
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold tracking-wider uppercase mb-2">Acesso Demo</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Email: <code className="text-indigo-600 dark:text-indigo-400 font-semibold">admin@erp.com</code>
           </p>
-          <p className="text-xs text-slate-400 mt-1">
-            Senha: <code className="text-indigo-400 font-semibold">Admin@123</code>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Senha: <code className="text-indigo-600 dark:text-indigo-400 font-semibold">Admin@123</code>
           </p>
         </div>
       </div>
