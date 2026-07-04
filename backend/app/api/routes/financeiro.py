@@ -87,3 +87,22 @@ def update_conta_pagar(id: str, data: ContaPagarUpdate, db: Session = Depends(ge
     db.commit()
     db.refresh(conta)
     return conta
+
+
+@router.delete("/contas-receber/{id}", status_code=204)
+def delete_conta_receber(id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    conta = db.query(ContaReceber).filter(ContaReceber.id == id, ContaReceber.deleted_at == None).first()
+    if not conta:
+        raise HTTPException(404, "Conta não encontrada")
+    conta.deleted_at = datetime.utcnow()
+    db.commit()
+
+
+@router.delete("/contas-pagar/{id}", status_code=204)
+def delete_conta_pagar(id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    conta = db.query(ContaPagar).filter(ContaPagar.id == id, ContaPagar.deleted_at == None).first()
+    if not conta:
+        raise HTTPException(404, "Conta não encontrada")
+    conta.deleted_at = datetime.utcnow()
+    db.commit()
+

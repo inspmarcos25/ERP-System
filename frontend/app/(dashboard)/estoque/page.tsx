@@ -13,7 +13,9 @@ import {
   Layers,
   ChevronDown,
   LayoutGrid,
-  List
+  List,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import { ViewToggle } from '@/components/shared/view-toggle';
 
@@ -45,7 +47,7 @@ export default function EstoquePage() {
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState('');
   const [onlyCritical, setOnlyCritical] = useState(false);
-  const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
+  const [viewMode, setViewMode] = useState<'cards' | 'list'>('list');
 
   // Modals state
   const [showAddProduct, setShowAddProduct] = useState(false);
@@ -53,6 +55,8 @@ export default function EstoquePage() {
   const [selectedProdForAjuste, setSelectedProdForAjuste] = useState<Produto | null>(null);
   const [qtyAjuste, setQtyAjuste] = useState(0);
   const [motivoAjuste, setMotivoAjuste] = useState('Ajuste manual');
+  const [showEditProduct, setShowEditProduct] = useState(false);
+  const [editProductData, setEditProductData] = useState<Produto | null>(null);
 
   // New product form fields
   const [newProduct, setNewProduct] = useState({
@@ -119,6 +123,29 @@ export default function EstoquePage() {
       loadEstoqueData();
     } catch (err) {
       alert('Erro ao ajustar estoque.');
+    }
+  };
+
+  const handleEditProductSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editProductData) return;
+    try {
+      await api.put(`/estoque/produtos/${editProductData.id}`, editProductData);
+      setShowEditProduct(false);
+      setEditProductData(null);
+      loadEstoqueData();
+    } catch (err) {
+      alert('Erro ao atualizar produto');
+    }
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir este produto?')) return;
+    try {
+      await api.delete(`/estoque/produtos/${id}`);
+      loadEstoqueData();
+    } catch (err) {
+      alert('Erro ao excluir produto');
     }
   };
 
@@ -248,12 +275,28 @@ export default function EstoquePage() {
                         )}
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <button 
-                          onClick={() => { setSelectedProdForAjuste(p); setQtyAjuste(0); setShowAjuste(true); }}
-                          className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-[10px] font-semibold text-slate-300 hover:text-white hover:bg-slate-850 cursor-pointer"
-                        >
-                          Ajustar
-                        </button>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button 
+                            onClick={() => { setEditProductData(p); setShowEditProduct(true); }}
+                            className="text-slate-400 hover:text-indigo-400 p-1 transition-colors cursor-pointer"
+                            title="Editar Produto"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteProduct(p.id)}
+                            className="text-slate-400 hover:text-rose-500 p-1 transition-colors cursor-pointer"
+                            title="Excluir Produto"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                          <button 
+                            onClick={() => { setSelectedProdForAjuste(p); setQtyAjuste(0); setShowAjuste(true); }}
+                            className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[9px] font-semibold text-slate-300 hover:text-white hover:bg-slate-850 cursor-pointer"
+                          >
+                            Ajustar
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -302,12 +345,28 @@ export default function EstoquePage() {
                     <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Saldo Atual</span>
                     <p className="text-sm font-bold text-white font-mono">{p.estoque_atual} {p.unidade}</p>
                   </div>
-                  <button 
-                    onClick={() => { setSelectedProdForAjuste(p); setQtyAjuste(0); setShowAjuste(true); }}
-                    className="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-[10px] font-semibold text-slate-300 hover:text-white hover:bg-slate-850 cursor-pointer"
-                  >
-                    Ajustar Saldo
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button 
+                      onClick={() => { setEditProductData(p); setShowEditProduct(true); }}
+                      className="text-slate-500 hover:text-indigo-400 p-1 transition-colors cursor-pointer"
+                      title="Editar Produto"
+                    >
+                      <Pencil size={12} />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteProduct(p.id)}
+                      className="text-slate-500 hover:text-rose-500 p-1 transition-colors cursor-pointer"
+                      title="Excluir Produto"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                    <button 
+                      onClick={() => { setSelectedProdForAjuste(p); setQtyAjuste(0); setShowAjuste(true); }}
+                      className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-[10px] font-semibold text-slate-300 hover:text-white hover:bg-slate-850 cursor-pointer"
+                    >
+                      Ajustar
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -409,6 +468,56 @@ export default function EstoquePage() {
             <div className="flex justify-end gap-2 pt-3">
               <button type="button" onClick={()=>{setShowAjuste(false); setSelectedProdForAjuste(null);}} className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-400 text-xs cursor-pointer">Cancelar</button>
               <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs cursor-pointer">Ajustar</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Edit Product Modal */}
+      {showEditProduct && editProductData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm">
+          <form 
+            onSubmit={handleEditProductSubmit}
+            className="w-full max-w-lg glass-panel bg-[#0B0F19] p-6 rounded-2xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+          >
+            <h3 className="text-md font-bold text-white mb-2">Editar Produto</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Código SKU</label>
+                <input required type="text" className="w-full glass-input text-xs mt-1" value={editProductData.codigo} onChange={(e)=>setEditProductData({...editProductData, codigo: e.target.value})}/>
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Nome do Produto</label>
+                <input required type="text" className="w-full glass-input text-xs mt-1" value={editProductData.nome} onChange={(e)=>setEditProductData({...editProductData, nome: e.target.value})}/>
+              </div>
+              <div className="col-span-2">
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Descrição</label>
+                <input type="text" className="w-full glass-input text-xs mt-1" value={editProductData.descricao || ''} onChange={(e)=>setEditProductData({...editProductData, descricao: e.target.value})}/>
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Unidade Medida</label>
+                <input type="text" className="w-full glass-input text-xs mt-1" value={editProductData.unidade} onChange={(e)=>setEditProductData({...editProductData, unidade: e.target.value})}/>
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Preço Custo (R$)</label>
+                <input type="number" step="any" className="w-full glass-input text-xs mt-1" value={editProductData.preco_custo} onChange={(e)=>setEditProductData({...editProductData, preco_custo: parseFloat(e.target.value) || 0})}/>
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Preço Venda (R$)</label>
+                <input type="number" step="any" className="w-full glass-input text-xs mt-1" value={editProductData.preco_venda} onChange={(e)=>setEditProductData({...editProductData, preco_venda: parseFloat(e.target.value) || 0})}/>
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Estoque Mínimo</label>
+                <input type="number" className="w-full glass-input text-xs mt-1" value={editProductData.estoque_minimo} onChange={(e)=>setEditProductData({...editProductData, estoque_minimo: parseFloat(e.target.value) || 0})}/>
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Estoque Máximo</label>
+                <input type="number" className="w-full glass-input text-xs mt-1" value={editProductData.estoque_maximo} onChange={(e)=>setEditProductData({...editProductData, estoque_maximo: parseFloat(e.target.value) || 0})}/>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-3">
+              <button type="button" onClick={()=>{setShowEditProduct(false); setEditProductData(null)}} className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-400 text-xs cursor-pointer">Cancelar</button>
+              <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs cursor-pointer">Salvar Alterações</button>
             </div>
           </form>
         </div>

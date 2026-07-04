@@ -81,3 +81,22 @@ def update_tarefa(id: str, data: TarefaUpdate, db: Session = Depends(get_db), cu
     db.commit()
     db.refresh(tarefa)
     return tarefa
+
+
+@router.delete("/{id}", status_code=204)
+def delete_projeto(id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    proj = db.query(Projeto).filter(Projeto.id == id, Projeto.deleted_at == None).first()
+    if not proj:
+        raise HTTPException(404, "Projeto não encontrado")
+    proj.deleted_at = datetime.utcnow()
+    db.commit()
+
+
+@router.delete("/tarefas/{id}", status_code=204)
+def delete_tarefa(id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    tarefa = db.query(Tarefa).filter(Tarefa.id == id, Tarefa.deleted_at == None).first()
+    if not tarefa:
+        raise HTTPException(404, "Tarefa não encontrada")
+    tarefa.deleted_at = datetime.utcnow()
+    db.commit()
+

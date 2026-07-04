@@ -124,3 +124,13 @@ def ajuste_estoque(
     db.add(mov)
     db.commit()
     return {"message": "Estoque ajustado", "estoque_atual": produto.estoque_atual}
+
+
+@router.delete("/produtos/{id}", status_code=204)
+def delete_produto(id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    produto = db.query(Produto).filter(Produto.id == id, Produto.deleted_at == None).first()
+    if not produto:
+        raise HTTPException(404, "Produto não encontrado")
+    produto.deleted_at = datetime.utcnow()
+    db.commit()
+

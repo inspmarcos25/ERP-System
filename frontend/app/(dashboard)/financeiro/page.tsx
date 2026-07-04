@@ -11,7 +11,9 @@ import {
   Calendar, 
   AlertCircle,
   TrendingUp,
-  FileText
+  FileText,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 
 interface Conta {
@@ -36,6 +38,9 @@ export default function FinanceiroPage() {
   const [newConta, setNewConta] = useState({
     descricao: '', valor: 0, data_vencimento: '', forma_pagamento: 'PIX', numero_documento: '', observacoes: ''
   });
+
+  const [showEditConta, setShowEditConta] = useState(false);
+  const [editContaData, setEditContaData] = useState<Conta | null>(null);
 
   const loadFinanceiroData = async () => {
     setLoading(true);
@@ -80,6 +85,37 @@ export default function FinanceiroPage() {
       loadFinanceiroData();
     } catch (err) {
       alert('Erro ao liquidar conta.');
+    }
+  };
+
+  const handleEditContaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editContaData) return;
+    try {
+      const endpoint = activeTab === 'receber' ? `/financeiro/contas-receber/${editContaData.id}` : `/financeiro/contas-pagar/${editContaData.id}`;
+      await api.put(endpoint, {
+        descricao: editContaData.descricao,
+        valor: editContaData.valor,
+        data_vencimento: editContaData.data_vencimento,
+        forma_pagamento: editContaData.forma_pagamento,
+        numero_documento: editContaData.numero_documento
+      });
+      setShowEditConta(false);
+      setEditContaData(null);
+      loadFinanceiroData();
+    } catch (err) {
+      alert('Erro ao atualizar conta');
+    }
+  };
+
+  const handleDeleteConta = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir este lançamento?')) return;
+    try {
+      const endpoint = activeTab === 'receber' ? `/financeiro/contas-receber/${id}` : `/financeiro/contas-pagar/${id}`;
+      await api.delete(endpoint);
+      loadFinanceiroData();
+    } catch (err) {
+      alert('Erro ao excluir conta');
     }
   };
 
@@ -197,17 +233,33 @@ export default function FinanceiroPage() {
                       </span>
                     </td>
                     <td className="px-5 py-4">
-                      {c.status.toLowerCase() !== 'pago' ? (
-                        <button
-                          onClick={() => handlePagarConta(c.id, c.valor)}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                      <div className="flex items-center gap-2">
+                        {c.status.toLowerCase() !== 'pago' ? (
+                          <button
+                            onClick={() => handlePagarConta(c.id, c.valor)}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                          >
+                            <Check size={12} />
+                            <span>Baixar</span>
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-500 italic">Liquidado</span>
+                        )}
+                        <button 
+                          onClick={() => { setEditContaData(c); setShowEditConta(true); }}
+                          className="text-slate-400 hover:text-indigo-400 p-1 transition-colors cursor-pointer"
+                          title="Editar"
                         >
-                          <Check size={12} />
-                          <span>Baixar</span>
+                          <Pencil size={14} />
                         </button>
-                      ) : (
-                        <span className="text-[10px] text-slate-500 italic">Liquidado</span>
-                      )}
+                        <button 
+                          onClick={() => handleDeleteConta(c.id)}
+                          className="text-slate-400 hover:text-rose-500 p-1 transition-colors cursor-pointer"
+                          title="Excluir"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -265,6 +317,53 @@ export default function FinanceiroPage() {
             <div className="flex justify-end gap-2 pt-3">
               <button type="button" onClick={()=>setShowAddConta(false)} className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-400 text-xs cursor-pointer">Cancelar</button>
               <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs cursor-pointer">Registrar</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Edit Title Modal */}
+      {showEditConta && editContaData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm">
+          <form 
+            onSubmit={handleEditContaSubmit}
+            className="w-full max-w-md glass-panel bg-[#0B0F19] p-6 rounded-2xl shadow-2xl space-y-4"
+          >
+            <h3 className="text-md font-bold text-white mb-2">Editar Lançamento</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Descrição / Título</label>
+                <input required type="text" className="w-full glass-input text-xs mt-1" value={editContaData.descricao} onChange={(e)=>setEditContaData({...editContaData, descricao: e.target.value})}/>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Valor (R$)</label>
+                  <input required type="number" step="any" className="w-full glass-input text-xs mt-1" value={editContaData.valor} onChange={(e)=>setEditContaData({...editContaData, valor: parseFloat(e.target.value) || 0})}/>
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Vencimento</label>
+                  <input required type="date" className="w-full glass-input text-xs mt-1" value={editContaData.data_vencimento} onChange={(e)=>setEditContaData({...editContaData, data_vencimento: e.target.value})}/>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Forma de Pagamento</label>
+                  <select className="w-full glass-input text-xs mt-1 block" value={editContaData.forma_pagamento || 'PIX'} onChange={(e)=>setEditContaData({...editContaData, forma_pagamento: e.target.value})}>
+                    <option value="PIX">PIX</option>
+                    <option value="Boleto">Boleto Bancário</option>
+                    <option value="Cartão">Cartão</option>
+                    <option value="Dinheiro">Dinheiro</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Nº Documento</label>
+                  <input type="text" className="w-full glass-input text-xs mt-1" value={editContaData.numero_documento || ''} onChange={(e)=>setEditContaData({...editContaData, numero_documento: e.target.value})}/>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-3">
+              <button type="button" onClick={()=>{setShowEditConta(false); setEditContaData(null)}} className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-400 text-xs cursor-pointer">Cancelar</button>
+              <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs cursor-pointer">Salvar Alterações</button>
             </div>
           </form>
         </div>

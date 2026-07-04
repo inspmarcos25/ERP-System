@@ -12,6 +12,7 @@ import {
   DollarSign, 
   Tag,
   Trash2,
+  Pencil,
   AlertCircle
 } from 'lucide-react';
 
@@ -52,6 +53,8 @@ export default function VendasPage() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddPedido, setShowAddPedido] = useState(false);
+  const [showEditPedido, setShowEditPedido] = useState(false);
+  const [editPedidoData, setEditPedidoData] = useState<Pedido | null>(null);
 
   // Lists for dropdown selectors
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -158,6 +161,33 @@ export default function VendasPage() {
     }
   };
 
+  const handleEditPedidoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editPedidoData) return;
+    try {
+      await api.put(`/vendas/pedidos/${editPedidoData.id}`, {
+        status: editPedidoData.status,
+        forma_pagamento: editPedidoData.forma_pagamento,
+        desconto: editPedidoData.desconto
+      });
+      setShowEditPedido(false);
+      setEditPedidoData(null);
+      loadData();
+    } catch (err) {
+      alert('Erro ao atualizar pedido');
+    }
+  };
+
+  const handleDeletePedido = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir este pedido?')) return;
+    try {
+      await api.delete(`/vendas/pedidos/${id}`);
+      loadData();
+    } catch (err) {
+      alert('Erro ao excluir pedido');
+    }
+  };
+
   const calculateSubtotal = () => {
     return orderItems.reduce((acc, item) => acc + item.total, 0);
   };
@@ -225,6 +255,7 @@ export default function VendasPage() {
                   <th className="px-5 py-4">Forma Pagto</th>
                   <th className="px-5 py-4">Status</th>
                   <th className="px-5 py-4 text-right">Total</th>
+                  <th className="px-5 py-4">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/40">
@@ -242,6 +273,24 @@ export default function VendasPage() {
                     </td>
                     <td className="px-5 py-4 text-right text-emerald-400 font-bold font-mono">
                       {formatCurrency(p.total)}
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => { setEditPedidoData(p); setShowEditPedido(true); }}
+                          className="text-slate-400 hover:text-indigo-400 p-1 transition-colors cursor-pointer"
+                          title="Editar Pedido"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button 
+                          onClick={() => handleDeletePedido(p.id)}
+                          className="text-slate-400 hover:text-rose-500 p-1 transition-colors cursor-pointer"
+                          title="Excluir Pedido"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -384,6 +433,42 @@ export default function VendasPage() {
                 <button type="button" onClick={() => setShowAddPedido(false)} className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-400 text-xs cursor-pointer">Cancelar</button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs cursor-pointer">Confirmar Pedido</button>
               </div>
+            </div>
+          </form>
+        </div>
+      )}
+      {/* Edit Order Dialog */}
+      {showEditPedido && editPedidoData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm">
+          <form 
+            onSubmit={handleEditPedidoSubmit}
+            className="w-full max-w-md glass-panel bg-[#0B0F19] p-6 rounded-2xl shadow-2xl space-y-4"
+          >
+            <h3 className="text-md font-bold text-white mb-2">Editar Pedido {editPedidoData.numero}</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Status</label>
+                <select className="w-full glass-input text-xs mt-1 block" value={editPedidoData.status} onChange={(e)=>setEditPedidoData({...editPedidoData, status: e.target.value})}>
+                  <option value="pendente">Pendente</option>
+                  <option value="aprovado">Aprovado</option>
+                  <option value="em_producao">Em Produção</option>
+                  <option value="entregue">Entregue</option>
+                  <option value="cancelado">Cancelado</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Forma de Pagamento</label>
+                <select className="w-full glass-input text-xs mt-1 block" value={editPedidoData.forma_pagamento} onChange={(e)=>setEditPedidoData({...editPedidoData, forma_pagamento: e.target.value})}>
+                  <option value="PIX">PIX</option>
+                  <option value="Boleto">Boleto Bancário</option>
+                  <option value="Cartão">Cartão de Crédito</option>
+                  <option value="Transferência">TED / DOC</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-3">
+              <button type="button" onClick={()=>{setShowEditPedido(false); setEditPedidoData(null)}} className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-400 text-xs cursor-pointer">Cancelar</button>
+              <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs cursor-pointer">Salvar Alterações</button>
             </div>
           </form>
         </div>

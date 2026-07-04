@@ -13,7 +13,9 @@ import {
   Calendar,
   AlertCircle,
   LayoutGrid,
-  List
+  List,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import { ViewToggle } from '@/components/shared/view-toggle';
 
@@ -41,10 +43,12 @@ export default function RHPage() {
   const [cargos, setCargos] = useState<Cargo[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
+  const [viewMode, setViewMode] = useState<'cards' | 'list'>('list');
   
   // Modal state
   const [showAddFunc, setShowAddFunc] = useState(false);
+  const [showEditFunc, setShowEditFunc] = useState(false);
+  const [editFuncData, setEditFuncData] = useState<Funcionario | null>(null);
   
   // New employee form fields
   const [newFunc, setNewFunc] = useState({
@@ -87,6 +91,29 @@ export default function RHPage() {
       loadRHData();
     } catch (err) {
       alert('Erro ao admitir funcionário');
+    }
+  };
+
+  const handleEditFuncSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editFuncData) return;
+    try {
+      await api.put(`/rh/funcionarios/${editFuncData.id}`, editFuncData);
+      setShowEditFunc(false);
+      setEditFuncData(null);
+      loadRHData();
+    } catch (err) {
+      alert('Erro ao atualizar funcionário');
+    }
+  };
+
+  const handleDeleteFunc = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir este funcionário?')) return;
+    try {
+      await api.delete(`/rh/funcionarios/${id}`);
+      loadRHData();
+    } catch (err) {
+      alert('Erro ao excluir funcionário');
     }
   };
 
@@ -175,6 +202,7 @@ export default function RHPage() {
                   <th className="text-right py-3 px-4 text-slate-400 font-semibold tracking-wider uppercase">Salário</th>
                   <th className="text-left py-3 px-4 text-slate-400 font-semibold tracking-wider uppercase">Admissão</th>
                   <th className="text-center py-3 px-4 text-slate-400 font-semibold tracking-wider uppercase">Status</th>
+                  <th className="text-center py-3 px-4 text-slate-400 font-semibold tracking-wider uppercase w-24">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -200,6 +228,24 @@ export default function RHPage() {
                           {f.status}
                         </span>
                       </td>
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button 
+                            onClick={() => { setEditFuncData(f); setShowEditFunc(true); }}
+                            className="text-slate-400 hover:text-indigo-400 p-1 transition-colors cursor-pointer"
+                            title="Editar Funcionário"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteFunc(f.id)}
+                            className="text-slate-400 hover:text-rose-500 p-1 transition-colors cursor-pointer"
+                            title="Excluir Funcionário"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}
@@ -224,9 +270,25 @@ export default function RHPage() {
                         <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{f.departamento || 'Geral'}</span>
                       </div>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold tracking-wider uppercase ${getStatusColor(f.status)}`}>
-                      {f.status}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold tracking-wider uppercase ${getStatusColor(f.status)}`}>
+                        {f.status}
+                      </span>
+                      <button 
+                        onClick={() => { setEditFuncData(f); setShowEditFunc(true); }}
+                        className="text-slate-500 hover:text-indigo-400 p-0.5 transition-colors cursor-pointer"
+                        title="Editar Funcionário"
+                      >
+                        <Pencil size={12} />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteFunc(f.id)}
+                        className="text-slate-500 hover:text-rose-500 p-0.5 transition-colors cursor-pointer"
+                        title="Excluir Funcionário"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-1 text-xs text-slate-400 mt-4">
@@ -322,6 +384,68 @@ export default function RHPage() {
             <div className="flex justify-end gap-2 pt-3">
               <button type="button" onClick={()=>setShowAddFunc(false)} className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-400 text-xs cursor-pointer">Cancelar</button>
               <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs cursor-pointer">Salvar</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Edit Employee Modal */}
+      {showEditFunc && editFuncData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm">
+          <form 
+            onSubmit={handleEditFuncSubmit}
+            className="w-full max-w-md glass-panel bg-[#0B0F19] p-6 rounded-2xl shadow-2xl space-y-4"
+          >
+            <h3 className="text-md font-bold text-white mb-2">Editar Colaborador</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Nome Completo</label>
+                <input required type="text" className="w-full glass-input text-xs mt-1" value={editFuncData.nome} onChange={(e)=>setEditFuncData({...editFuncData, nome: e.target.value})}/>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">CPF</label>
+                  <input type="text" className="w-full glass-input text-xs mt-1" value={editFuncData.cpf || ''} onChange={(e)=>setEditFuncData({...editFuncData, cpf: e.target.value})}/>
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">E-mail Corporativo</label>
+                  <input type="email" className="w-full glass-input text-xs mt-1" value={editFuncData.email || ''} onChange={(e)=>setEditFuncData({...editFuncData, email: e.target.value})}/>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Departamento</label>
+                  <select className="w-full glass-input text-xs mt-1 block" value={editFuncData.departamento || ''} onChange={(e)=>setEditFuncData({...editFuncData, departamento: e.target.value})}>
+                    <option value="Comercial">Comercial</option>
+                    <option value="TI">Tecnologia (TI)</option>
+                    <option value="Financeiro">Financeiro</option>
+                    <option value="Administrativo">Administrativo</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Status</label>
+                  <select className="w-full glass-input text-xs mt-1 block" value={editFuncData.status} onChange={(e)=>setEditFuncData({...editFuncData, status: e.target.value})}>
+                    <option value="ativo">Ativo</option>
+                    <option value="ferias">Férias</option>
+                    <option value="inativo">Inativo</option>
+                    <option value="demitido">Demitido</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Salário (R$)</label>
+                  <input required type="number" className="w-full glass-input text-xs mt-1" value={editFuncData.salario} onChange={(e)=>setEditFuncData({...editFuncData, salario: parseFloat(e.target.value) || 0})}/>
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Data Admissão</label>
+                  <input type="date" className="w-full glass-input text-xs mt-1" value={editFuncData.data_admissao || ''} onChange={(e)=>setEditFuncData({...editFuncData, data_admissao: e.target.value})}/>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-3">
+              <button type="button" onClick={()=>{setShowEditFunc(false); setEditFuncData(null)}} className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-400 text-xs cursor-pointer">Cancelar</button>
+              <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs cursor-pointer">Salvar Alterações</button>
             </div>
           </form>
         </div>

@@ -14,7 +14,9 @@ import {
   ChevronLeft,
   Briefcase,
   LayoutGrid,
-  List
+  List,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import { ViewToggle } from '@/components/shared/view-toggle';
 
@@ -47,8 +49,12 @@ export default function ProjetosPage() {
   const [loading, setLoading] = useState(true);
   const [showAddProj, setShowAddProj] = useState(false);
   const [showAddTask, setShowAddTask] = useState(false);
+  const [showEditProj, setShowEditProj] = useState(false);
+  const [editProjData, setEditProjData] = useState<Projeto | null>(null);
+  const [showEditTask, setShowEditTask] = useState(false);
+  const [editTaskData, setEditTaskData] = useState<Task | null>(null);
 
-  const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
+  const [viewMode, setViewMode] = useState<'cards' | 'list'>('list');
 
   // Form states
   const [newProj, setNewProj] = useState({ nome: '', descricao: '', orcamento: 0 });
@@ -111,6 +117,63 @@ export default function ProjetosPage() {
     }
   };
 
+  const handleEditProjSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editProjData) return;
+    try {
+      await api.put(`/projetos/${editProjData.id}`, {
+        nome: editProjData.nome,
+        descricao: editProjData.descricao,
+        orcamento: editProjData.orcamento,
+        status: editProjData.status
+      });
+      setShowEditProj(false);
+      setEditProjData(null);
+      loadProjetos();
+    } catch (err) {
+      alert('Erro ao atualizar projeto');
+    }
+  };
+
+  const handleDeleteProj = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir este projeto e todas as suas tarefas?')) return;
+    try {
+      await api.delete(`/projetos/${id}`);
+      setSelectedProj(null);
+      loadProjetos();
+    } catch (err) {
+      alert('Erro ao excluir projeto');
+    }
+  };
+
+  const handleEditTaskSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editTaskData) return;
+    try {
+      await api.put(`/projetos/tarefas/${editTaskData.id}`, {
+        titulo: editTaskData.titulo,
+        descricao: editTaskData.descricao,
+        prioridade: editTaskData.prioridade,
+        status: editTaskData.status
+      });
+      setShowEditTask(false);
+      setEditTaskData(null);
+      loadProjetos();
+    } catch (err) {
+      alert('Erro ao atualizar tarefa');
+    }
+  };
+
+  const handleDeleteTask = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir esta tarefa?')) return;
+    try {
+      await api.delete(`/projetos/tarefas/${id}`);
+      loadProjetos();
+    } catch (err) {
+      alert('Erro ao excluir tarefa');
+    }
+  };
+
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
   };
@@ -142,13 +205,29 @@ export default function ProjetosPage() {
               </div>
             </div>
 
-            <button
-              onClick={() => setShowAddTask(true)}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold cursor-pointer"
-            >
-              <Plus size={15} />
-              <span>Nova Tarefa</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowAddTask(true)}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold cursor-pointer"
+              >
+                <Plus size={15} />
+                <span>Nova Tarefa</span>
+              </button>
+              <button
+                onClick={() => { setEditProjData(selectedProj); setShowEditProj(true); }}
+                className="p-2.5 rounded-xl border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-indigo-400 cursor-pointer"
+                title="Editar Projeto"
+              >
+                <Pencil size={15} />
+              </button>
+              <button
+                onClick={() => handleDeleteProj(selectedProj.id)}
+                className="p-2.5 rounded-xl border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-rose-500 cursor-pointer"
+                title="Excluir Projeto"
+              >
+                <Trash2 size={15} />
+              </button>
+            </div>
           </div>
 
           {/* Kanban Board Columns Grid */}
@@ -193,6 +272,20 @@ export default function ProjetosPage() {
                                 <ArrowRight size={10} />
                               </button>
                             )}
+                            <button 
+                              onClick={() => { setEditTaskData(t); setShowEditTask(true); }}
+                              className="p-1 rounded bg-slate-900 border border-slate-800 hover:border-slate-600 text-slate-400 hover:text-indigo-400 cursor-pointer"
+                              title="Editar tarefa"
+                            >
+                              <Pencil size={10} />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteTask(t.id)}
+                              className="p-1 rounded bg-slate-900 border border-slate-800 hover:border-slate-600 text-slate-400 hover:text-rose-400 cursor-pointer"
+                              title="Excluir tarefa"
+                            >
+                              <Trash2 size={10} />
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -250,6 +343,7 @@ export default function ProjetosPage() {
                       <th className="text-right py-3 px-4 text-slate-400 font-semibold tracking-wider uppercase">Orçamento</th>
                       <th className="text-right py-3 px-4 text-slate-400 font-semibold tracking-wider uppercase">Custo Atual</th>
                       <th className="text-center py-3 px-4 text-slate-400 font-semibold tracking-wider uppercase">Status</th>
+                      <th className="text-center py-3 px-4 text-slate-400 font-semibold tracking-wider uppercase w-24">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -276,6 +370,24 @@ export default function ProjetosPage() {
                             {p.status}
                           </span>
                         </td>
+                        <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-center gap-2">
+                            <button 
+                              onClick={() => { setEditProjData(p); setShowEditProj(true); }}
+                              className="text-slate-400 hover:text-indigo-400 p-1 transition-colors cursor-pointer"
+                              title="Editar Projeto"
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteProj(p.id)}
+                              className="text-slate-400 hover:text-rose-500 p-1 transition-colors cursor-pointer"
+                              title="Excluir Projeto"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -292,9 +404,25 @@ export default function ProjetosPage() {
                 >
                   <div className="flex justify-between items-start mb-3">
                     <h3 className="font-bold text-white text-sm tracking-tight">{p.nome}</h3>
-                    <span className="px-2 py-0.5 rounded-md text-[9px] font-bold tracking-wider uppercase bg-indigo-500/10 text-indigo-400 border border-indigo-500/25">
-                      {p.status}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="px-2 py-0.5 rounded-md text-[9px] font-bold tracking-wider uppercase bg-indigo-500/10 text-indigo-400 border border-indigo-500/25">
+                        {p.status}
+                      </span>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setEditProjData(p); setShowEditProj(true); }}
+                        className="text-slate-500 hover:text-indigo-400 p-0.5 transition-colors cursor-pointer"
+                        title="Editar"
+                      >
+                        <Pencil size={12} />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleDeleteProj(p.id); }}
+                        className="text-slate-500 hover:text-rose-500 p-0.5 transition-colors cursor-pointer"
+                        title="Excluir"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   </div>
                   
                   <p className="text-xs text-slate-400 line-clamp-2 mb-4 h-8">{p.descricao || 'Sem descrição cadastrada.'}</p>
@@ -392,6 +520,94 @@ export default function ProjetosPage() {
             <div className="flex justify-end gap-2 pt-3">
               <button type="button" onClick={()=>setShowAddTask(false)} className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-400 text-xs cursor-pointer">Cancelar</button>
               <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs cursor-pointer">Criar</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Edit Project Modal */}
+      {showEditProj && editProjData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm">
+          <form 
+            onSubmit={handleEditProjSubmit}
+            className="w-full max-w-sm glass-panel bg-[#0B0F19] p-6 rounded-2xl shadow-2xl space-y-4"
+          >
+            <h3 className="text-md font-bold text-white mb-2">Editar Projeto</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Nome do Projeto</label>
+                <input required type="text" className="w-full glass-input text-xs mt-1" value={editProjData.nome} onChange={(e)=>setEditProjData({...editProjData, nome: e.target.value})}/>
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Descrição</label>
+                <input type="text" className="w-full glass-input text-xs mt-1" value={editProjData.descricao || ''} onChange={(e)=>setEditProjData({...editProjData, descricao: e.target.value})}/>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Orçamento (R$)</label>
+                  <input type="number" className="w-full glass-input text-xs mt-1" value={editProjData.orcamento} onChange={(e)=>setEditProjData({...editProjData, orcamento: parseFloat(e.target.value) || 0})}/>
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Status</label>
+                  <select className="w-full glass-input text-xs mt-1 block" value={editProjData.status} onChange={(e)=>setEditProjData({...editProjData, status: e.target.value})}>
+                    <option value="planejamento">Planejamento</option>
+                    <option value="em_andamento">Em Andamento</option>
+                    <option value="pausado">Pausado</option>
+                    <option value="concluido">Concluído</option>
+                    <option value="cancelado">Cancelado</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-3">
+              <button type="button" onClick={()=>{setShowEditProj(false); setEditProjData(null)}} className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-400 text-xs cursor-pointer">Cancelar</button>
+              <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs cursor-pointer">Salvar</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Edit Task Modal */}
+      {showEditTask && editTaskData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm">
+          <form 
+            onSubmit={handleEditTaskSubmit}
+            className="w-full max-w-sm glass-panel bg-[#0B0F19] p-6 rounded-2xl shadow-2xl space-y-4"
+          >
+            <h3 className="text-md font-bold text-white mb-2">Editar Tarefa</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Título da Tarefa</label>
+                <input required type="text" className="w-full glass-input text-xs mt-1" value={editTaskData.titulo} onChange={(e)=>setEditTaskData({...editTaskData, titulo: e.target.value})}/>
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Descrição / Detalhes</label>
+                <input type="text" className="w-full glass-input text-xs mt-1" value={editTaskData.descricao || ''} onChange={(e)=>setEditTaskData({...editTaskData, descricao: e.target.value})}/>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Prioridade</label>
+                  <select className="w-full glass-input text-xs mt-1 block" value={editTaskData.prioridade} onChange={(e)=>setEditTaskData({...editTaskData, prioridade: e.target.value})}>
+                    <option value="baixa">Baixa</option>
+                    <option value="media">Média</option>
+                    <option value="alta">Alta</option>
+                    <option value="urgente">Urgente</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Status</label>
+                  <select className="w-full glass-input text-xs mt-1 block" value={editTaskData.status} onChange={(e)=>setEditTaskData({...editTaskData, status: e.target.value as Task['status']})}>
+                    <option value="todo">A Fazer</option>
+                    <option value="em_andamento">Em Progresso</option>
+                    <option value="revisao">Revisão</option>
+                    <option value="concluido">Concluído</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-3">
+              <button type="button" onClick={()=>{setShowEditTask(false); setEditTaskData(null)}} className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-400 text-xs cursor-pointer">Cancelar</button>
+              <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs cursor-pointer">Salvar</button>
             </div>
           </form>
         </div>
